@@ -1,0 +1,53 @@
+name: Build and deploy
+
+on:
+  schedule:
+    - cron: "17 7 * * *"   # nightly, 07:17 UTC
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never cancel a deploy midway; queue instead.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Build data/projects.json
+        env:
+          # Default GITHUB_TOKEN is scoped to this repo only; it still lifts the
+          # rate limit to 5000/hr, and every satellite read is public anyway.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node build/build.mjs
+
+      - name: Show what was built
+        run: |
+          node -e "const d=require('./data/projects.json');console.log(d.projects.length+' projects');for(const p of d.projects)console.log('  '+p.slug+'  docs='+p.docs.length+'  demo='+(p.demo_url||'-'))"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

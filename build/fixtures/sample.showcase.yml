@@ -1,0 +1,17 @@
+title: J-Lens                          # required
+tagline: One line, ~10 words           # required
+description: |                         # optional, a paragraph
+  Longer prose shown on the card's expanded view.
+  It runs to a second line, and keeps # this hash literally.
+tags: [interpretability, pytorch]      # optional; merged with GitHub topics
+order: 10                              # optional sort weight, lower = earlier
+demo: https://user.github.io/j-lens/   # optional; overrides auto-detected Pages URL
+hidden: false                          # optional kill switch
+screenshots:                           # optional
+  - path: docs/img/hero.png
+    alt: Attribution heatmap over a prompt
+  - path: docs/img/two.png
+    alt: "A quoted alt, with: a colon"
+docs:                                  # optional; PDFs stay in the satellite repo
+  - title: J-Lens technical report
+    path: paper/j-lens.pdf
