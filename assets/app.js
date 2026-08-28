@@ -34,7 +34,10 @@
       // why there is no inline preview here.
       ul.appendChild(el("li", null, [
         el("a", { href: d.raw_url, download: "" }, [
-          el("span", { text: d.title }),
+          el("span", { class: "doc-main" }, [
+            el("span", { class: "doc-title", text: d.title }),
+            d.description ? el("span", { class: "doc-desc", text: d.description }) : null,
+          ]),
           el("span", { class: "size", text: d.size_label || "" }),
         ]),
       ]));

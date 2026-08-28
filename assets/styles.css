@@ -40,6 +40,8 @@ a { color: var(--accent); }
 .docs li { border-bottom: 1px solid var(--line); }
 .docs a { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline;
           padding: .55rem .1rem; text-decoration: none; color: var(--fg); font-size: .9rem; }
+.doc-main { display: flex; flex-direction: column; gap: .1rem; min-width: 0; }
+.doc-desc { color: var(--muted); font-size: .8rem; }
 .docs a:hover { color: var(--accent); }
 .docs .size { color: var(--muted); font-size: .78rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .card--writings { grid-column: 1 / -1; }

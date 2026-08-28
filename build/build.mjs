@@ -118,6 +118,7 @@ async function resolveDocs({ client, owner, repo, branch, manifest, problems }) 
     seen.add(d.path);
     docs.push({
       title: d.title || titleFromFilename(d.path.split("/").pop()),
+      description: d.description ? String(d.description).trim() : null,
       path: d.path,
       raw_url: rawUrl(owner, repo, branch, d.path),
       blob_url: blobUrl(owner, repo, branch, d.path),
@@ -137,6 +138,7 @@ async function resolveDocs({ client, owner, repo, branch, manifest, problems }) 
       if (seen.has(e.path)) continue;
       docs.push({
         title: titleFromFilename(e.name),
+        description: null,
         path: e.path,
         raw_url: rawUrl(owner, repo, branch, e.path),
         blob_url: blobUrl(owner, repo, branch, e.path),

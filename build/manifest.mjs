@@ -37,6 +37,7 @@ export function validate(m) {
       else if (/^https?:\/\//.test(String(item.path))) errors.push(`${key}[${i}].path must be a repo-relative path, not a URL`);
       else if (String(item.path).startsWith("/") || String(item.path).includes("..")) errors.push(`${key}[${i}].path must stay inside the repo`);
       if (key === "docs" && !item.title) warnings.push(`docs[${i}] has no title; falling back to the filename`);
+      if (key === "docs" && item.description != null && typeof item.description !== "string") errors.push(`docs[${i}].description must be a string`);
       if (key === "screenshots" && !item.alt) warnings.push(`screenshots[${i}] has no alt text`);
     });
   }
