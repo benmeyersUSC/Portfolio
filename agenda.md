@@ -1,0 +1,3 @@
+- rerun/remake alphatoe, train it end to end with tttn, then make an interactive github pages
+- make a web page for the lamdba calculus interpreter (excavate from optionsapp)
+- compile turingviz into html with emscripten so it can have a github pages (exactly like relativity....unless it's too old and beat )
