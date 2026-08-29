@@ -228,6 +228,12 @@ async function project({ client, owner, entry }) {
     ? await resolveApps({ client, owner, repo: r.name, branch, manifest: m, pagesUrl: demo, problems })
     : [];
 
+  // For a gallery the Pages URL is a base for building exhibit links, not a
+  // destination: the repo root has no index.html unless the author wrote one,
+  // so advertising it as a demo link points at a 404. The exhibits are the
+  // demos. An explicit demo: in the manifest still wins.
+  if (m.kind === "gallery" && !m.demo) demo = null;
+
   return {
     project: {
       slug: slugify(m.title || r.name),
