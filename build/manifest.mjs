@@ -5,9 +5,9 @@
 //              them by hand, so adding a PDF needs no manifest edit
 export const KNOWN_KEYS = [
   "title", "tagline", "description", "tags", "order", "demo", "hidden",
-  "screenshots", "docs", "kind", "docs_glob",
+  "screenshots", "docs", "kind", "docs_glob", "apps", "apps_glob",
 ];
-export const KINDS = ["project", "writings"];
+export const KINDS = ["project", "writings", "gallery"];
 
 export function validate(m) {
   const errors = [];
@@ -28,7 +28,15 @@ export function validate(m) {
     else if (m.docs_glob.includes("**")) errors.push("docs_glob does not support ** (one directory level only)");
     else if (!m.docs_glob.includes("*") && !m.docs_glob.includes("?")) warnings.push("docs_glob has no wildcard; did you mean docs?");
   }
-  for (const [key, list] of [["screenshots", m.screenshots], ["docs", m.docs]]) {
+  if (m.apps_glob != null) {
+    if (typeof m.apps_glob !== "string") errors.push("apps_glob must be a string");
+    else if (m.apps_glob.includes("**")) errors.push("apps_glob does not support ** (one directory level only)");
+    else if (!m.apps_glob.includes("*") && !m.apps_glob.includes("?")) warnings.push("apps_glob has no wildcard; did you mean apps?");
+  }
+  if ((m.apps || m.apps_glob) && m.kind !== "gallery") {
+    warnings.push('apps/apps_glob only render under kind: gallery');
+  }
+  for (const [key, list] of [["screenshots", m.screenshots], ["docs", m.docs], ["apps", m.apps]]) {
     if (list == null) continue;
     if (!Array.isArray(list)) { errors.push(`${key} must be a list`); continue; }
     list.forEach((item, i) => {
@@ -36,7 +44,8 @@ export function validate(m) {
       if (!item.path) errors.push(`${key}[${i}] missing required key: path`);
       else if (/^https?:\/\//.test(String(item.path))) errors.push(`${key}[${i}].path must be a repo-relative path, not a URL`);
       else if (String(item.path).startsWith("/") || String(item.path).includes("..")) errors.push(`${key}[${i}].path must stay inside the repo`);
-      if (key === "docs" && !item.title) warnings.push(`docs[${i}] has no title; falling back to the filename`);
+      if ((key === "docs" || key === "apps") && !item.title) warnings.push(`${key}[${i}] has no title; falling back to the filename`);
+      if (key === "apps" && item.description != null && typeof item.description !== "string") errors.push(`apps[${i}].description must be a string`);
       if (key === "docs" && item.description != null && typeof item.description !== "string") errors.push(`docs[${i}].description must be a string`);
       if (key === "screenshots" && !item.alt) warnings.push(`screenshots[${i}] has no alt text`);
     });

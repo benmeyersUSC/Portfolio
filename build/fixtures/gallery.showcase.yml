@@ -1,0 +1,9 @@
+title: Interactives
+tagline: LLM-assisted interactive visualizations you may enjoy
+kind: gallery
+order: 1
+apps_glob: "*.html"
+apps:
+  - path: attention-heads.html
+    title: Attention Heads
+    description: Drag a token to see what attends to it.

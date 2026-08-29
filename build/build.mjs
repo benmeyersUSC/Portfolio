@@ -150,6 +150,57 @@ async function resolveDocs({ client, owner, repo, branch, manifest, problems }) 
   return docs;
 }
 
+
+// Gallery entries are served, not downloaded: each one is a page on the
+// satellite's own GitHub Pages site, so the links are built from its Pages URL
+// rather than raw.githubusercontent.com. Explicit `apps:` entries come first
+// and may carry a title or description; `apps_glob` sweeps up the rest.
+async function resolveApps({ client, owner, repo, branch, manifest, pagesUrl, problems }) {
+  const apps = [];
+  const seen = new Set();
+  const base = (pagesUrl || "").replace(/\/$/, "");
+  const link = (p) => `${base}/${p.split("/").map(encodeURIComponent).join("/")}`;
+
+  if (!base) {
+    problems.push("kind: gallery needs GitHub Pages enabled on this repo; no links emitted");
+    return apps;
+  }
+
+  for (const a of manifest.apps || []) {
+    if (!a?.path) continue;
+    let meta = null;
+    try {
+      meta = await getFile(client, owner, repo, a.path, branch);
+    } catch (err) {
+      problems.push(`apps: ${a.path}: ${err.message}`);
+    }
+    if (!meta) { problems.push(`apps: ${a.path} not found on ${branch}`); continue; }
+    seen.add(a.path);
+    apps.push({
+      title: a.title || titleFromFilename(a.path.split("/").pop()),
+      description: a.description ? String(a.description).trim() : null,
+      path: a.path,
+      url: link(a.path),
+    });
+  }
+
+  if (manifest.apps_glob) {
+    const { dir, test } = compileGlob(manifest.apps_glob);
+    const entries = await listDir(client, owner, repo, dir, branch);
+    const matched = entries
+      .filter((e) => e.type === "file" && test(e.name))
+      // index.html is the Pages landing page, not an exhibit.
+      .filter((e) => e.name.toLowerCase() !== "index.html")
+      .sort((a, b) => a.name.localeCompare(b.name));
+    if (matched.length === 0) problems.push(`apps_glob "${manifest.apps_glob}" matched nothing`);
+    for (const e of matched) {
+      if (seen.has(e.path)) continue;
+      apps.push({ title: titleFromFilename(e.name), description: null, path: e.path, url: link(e.path) });
+    }
+  }
+  return apps;
+}
+
 async function project({ client, owner, entry }) {
   const r = entry.repo;
   const m = entry.manifest || {};
@@ -160,6 +211,9 @@ async function project({ client, owner, entry }) {
   if (!demo && r.has_pages) demo = await getPagesUrl(client, owner, r.name);
 
   const docs = await resolveDocs({ client, owner, repo: r.name, branch, manifest: m, problems });
+  const apps = (m.kind === "gallery")
+    ? await resolveApps({ client, owner, repo: r.name, branch, manifest: m, pagesUrl: demo, problems })
+    : [];
 
   return {
     project: {
@@ -178,6 +232,7 @@ async function project({ client, owner, entry }) {
       order: m.order ?? null,
       screenshots: [],
       docs,
+      apps,
     },
     problems,
   };
@@ -300,7 +355,7 @@ async function main() {
   } else {
     mkdirSync(resolve(ROOT, "data"), { recursive: true });
     writeFileSync(resolve(ROOT, "data/projects.json"), JSON.stringify(payload, null, 2) + "\n");
-    console.error(`\nWrote data/projects.json -- ${projects.length} projects, ${projects.reduce((n, p) => n + p.docs.length, 0)} docs.`);
+    console.error(`\nWrote data/projects.json -- ${projects.length} projects, ${projects.reduce((n, p) => n + p.docs.length, 0)} docs, ${projects.reduce((n, p) => n + p.apps.length, 0)} gallery items.`);
     console.error(`API calls: ${client.stats.calls}${client.stats.remaining != null ? `, rate limit ${client.stats.remaining}/${client.stats.limit} left` : ""}.`);
     if (failed) console.error(`${failed} manifest(s) skipped -- see SKIP lines above.`);
   }

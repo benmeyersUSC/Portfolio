@@ -45,21 +45,41 @@
     return ul;
   }
 
+  function appList(apps) {
+    var ul = el("ul", { class: "docs apps" });
+    apps.forEach(function (a) {
+      // These are live pages on the satellite's own Pages site, so they open
+      // in a new tab rather than downloading.
+      ul.appendChild(el("li", null, [
+        el("a", { href: a.url, target: "_blank", rel: "noopener" }, [
+          el("span", { class: "doc-main" }, [
+            el("span", { class: "doc-title", text: a.title }),
+            a.description ? el("span", { class: "doc-desc", text: a.description }) : null,
+          ]),
+          el("span", { class: "size", text: "open \u2197" }),
+        ]),
+      ]));
+    });
+    return ul;
+  }
+
   function card(p) {
     var isWritings = p.kind === "writings";
+    var isGallery = p.kind === "gallery";
     var meta = el("div", { class: "meta" });
     if (p.language) meta.appendChild(el("span", { text: p.language }));
     if (p.stars) meta.appendChild(el("span", { text: "★ " + p.stars }));
     if (p.pushed_at) meta.appendChild(el("span", { text: "updated " + p.pushed_at.slice(0, 10) }));
     p.tags.forEach(function (t) { meta.appendChild(el("span", { class: "tag", text: t })); });
 
-    return el("article", { class: "card" + (isWritings ? " card--writings" : "") }, [
+    return el("article", { class: "card" + (isWritings || isGallery ? " card--writings" : "") }, [
       el("h2", null, [el("a", { href: p.repo_url, text: p.title })]),
       el("p", { class: "tagline", text: p.tagline }),
       p.description ? el("p", { class: "desc", text: p.description }) : null,
       meta,
       links(p),
       p.docs && p.docs.length ? docList(p.docs) : null,
+      p.apps && p.apps.length ? appList(p.apps) : null,
     ]);
   }
 
