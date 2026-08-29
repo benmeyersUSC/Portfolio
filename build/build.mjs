@@ -195,7 +195,20 @@ async function resolveApps({ client, owner, repo, branch, manifest, pagesUrl, pr
     if (matched.length === 0) problems.push(`apps_glob "${manifest.apps_glob}" matched nothing`);
     for (const e of matched) {
       if (seen.has(e.path)) continue;
-      apps.push({ title: titleFromFilename(e.name), description: null, path: e.path, url: link(e.path) });
+      // A hand-written <title> beats a filename, and costs nothing to honour --
+      // it keeps "just drop an html file in" as the whole workflow.
+      let title = null;
+      try {
+        const f = await getFile(client, owner, repo, e.path, branch);
+        const m = f?.text?.match(/<title[^>]*>([^<]{1,120})<\/title>/i);
+        if (m) title = m[1].trim().replace(/\s+/g, " ");
+      } catch {
+        // fall back to the filename
+      }
+      apps.push({
+        title: title || titleFromFilename(e.name),
+        description: null, path: e.path, url: link(e.path),
+      });
     }
   }
   return apps;
